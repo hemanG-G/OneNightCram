@@ -12,6 +12,10 @@ from langchain.chains.question_answering import load_qa_chain
 from langchain.prompts import PromptTemplate
 from dotenv import load_dotenv
 
+import requests
+
+
+
 load_dotenv()
 # os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
@@ -67,6 +71,42 @@ def get_conversational_chain():
     return chain
 
 
+def gptmagic(input):
+    URL = "https://api.openai.com/v1/chat/completions"
+    OPEN_API_KEY = "" ## add key here
+
+    payload = {
+    "model": "gpt-3.5-turbo",
+    "messages": [{"role": "user", "content": f"Make this answer into an answer that i would write in an examination , make it as detailed and long as poissible , keep it pointwise.\n \n The Answer:{input}"}],
+    "temperature" : 1.0,
+    "top_p":1.0,
+    "n" : 1,
+    "stream": False,
+    "presence_penalty":0,
+    "frequency_penalty":0,
+    }
+
+    headers = {
+    "Content-Type": "application/json",
+    "Authorization": f"Bearer {OPEN_API_KEY}"
+    }
+
+    response = requests.post(URL, headers=headers, json=payload, stream=False)
+    print(response.content)
+
+    # print(response.content)
+    response_json = response.json()
+    
+    # # Extract the "content" part
+    content = response_json['choices'][0]['message']['content']
+
+    
+    # Now 'content' variable holds the extracted content
+    return content
+
+
+
+
 
 def user_input(user_question):
     embeddings = GoogleGenerativeAIEmbeddings(model = "models/embedding-001")
@@ -81,8 +121,12 @@ def user_input(user_question):
         {"input_documents":docs, "question": user_question}
         , return_only_outputs=True)
 
-    print(response)
+    print(response["output_text"])
+    ## gpt enhancement here ( requires open ai paid)
+    # out = gptmagic(response["output_text"])
+
     st.write("Reply: ", response["output_text"])
+
 
 
 
